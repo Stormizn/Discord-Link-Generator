@@ -21,19 +21,23 @@ public class DiscordBot {
 
     public static void main(String[] args) throws Exception {
 
-        // try loading config from directory, fall back to resources.
-        Path configPath = Path.of("config.json");
-        if (!Files.exists(configPath)) {
-            configPath = Path.of("src/main/resources/config.json");
-        }
-        JsonObject config = JsonParser.parseString(Files.readString(configPath)).getAsJsonObject();
-        String token = config.get("token").getAsString();
-        PASTEBIN_API_KEY = config.get("pastebinApiKey").getAsString();
-
+        // load config from env vars, falling back to config.json
+        String token = System.getenv("BOT_TOKEN");
+        PASTEBIN_API_KEY = System.getenv("PASTEBIN_API_KEY");
         Set<String> autoChannels = new HashSet<>();
-        config.getAsJsonArray("autoUploadChannels").forEach(
-                e -> autoChannels.add(e.getAsString())
-        );
+
+        if (token == null || PASTEBIN_API_KEY == null) {
+            Path configPath = Path.of("config.json");
+            if (!Files.exists(configPath)) {
+                configPath = Path.of("src/main/resources/config.json");
+            }
+            JsonObject config = JsonParser.parseString(Files.readString(configPath)).getAsJsonObject();
+            if (token == null) token = config.get("token").getAsString();
+            if (PASTEBIN_API_KEY == null) PASTEBIN_API_KEY = config.get("pastebinApiKey").getAsString();
+            config.getAsJsonArray("autoUploadChannels").forEach(
+                    e -> autoChannels.add(e.getAsString())
+            );
+        }
 
         JDA jda = JDABuilder.createDefault(token)
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
