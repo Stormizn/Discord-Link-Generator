@@ -4,13 +4,16 @@ import me.stormizn.bot.services.MclogsService;
 import me.stormizn.bot.services.PasteService;
 import me.stormizn.bot.services.PastebinService;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Set;
 
 public class UploadCommand extends ListenerAdapter {
@@ -113,6 +116,21 @@ public class UploadCommand extends ListenerAdapter {
             }
             throw e;
         }
+    }
+
+    // auto-complete service option
+    @Override
+    public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent event) {
+        if (!event.getName().equals("upload")) return;
+        if (!event.getFocusedOption().getName().equals("service")) return;
+
+        String typed = event.getFocusedOption().getValue().toLowerCase();
+        List<Command.Choice> choices = List.of("mclogs", "pastebin").stream()
+                .filter(s -> s.startsWith(typed))
+                .map(s -> new Command.Choice(s, s))
+                .toList();
+
+        event.replyChoices(choices).queue();
     }
 
     // formats file size
